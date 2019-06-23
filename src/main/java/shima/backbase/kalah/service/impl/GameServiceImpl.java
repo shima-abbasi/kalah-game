@@ -1,6 +1,5 @@
 package shima.backbase.kalah.service.impl;
 
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,7 +19,9 @@ import java.util.List;
 import java.util.Random;
 
 @Service
+@Transactional
 public class GameServiceImpl implements GameService {
+
     @Autowired
     private PlayerService playerService;
     @Autowired
@@ -37,14 +38,13 @@ public class GameServiceImpl implements GameService {
         Game game = initiateGame();
         List<Player> players = playerService.initiatePlayers(game);
         Board board = boardService.initiateBoard();
-        List<Pit> pits = pitService.initiatePits(players, board);
+        pitService.initiatePits(players, board);
         game.setBoard(board);
         return gameRepo.save(game);
     }
 
     @Override
     public Object move(int gameId, int pitId) {
-        String gameResult;
         Game game = checkGameAvailability(gameId);
 
         pitService.checkPitValidity(pitId);
@@ -62,8 +62,11 @@ public class GameServiceImpl implements GameService {
 
         pits = pitService.moveStone(player1, player2, pits, currentPit);
 
-        gameResult = " 1:" + pits.get(0) + " , 2: " + pits.get(1) + ", 3:" + pits.get(2) + ", 4:" + pits.get(3) + " , 5:" + pits.get(4) + " , 6:" + pits.get(5) + " , 7:" + pits.get(6) + " , 8:" + pits.get(7) + " , 9:" + pits.get(8) + " , 10:" + pits.get(9) + " , 11:" + pits.get(10) + " , 12:" + pits.get(11) + " , 13:" + pits.get(12) + " , 14:" + pits.get(13);
-        return gameResult;
+        if (checkEndOfGame(player1, player2)) {
+            game.setGameStatus(GameStatus.ENDED);
+            playerService.calculateWinner(player1, player2);
+        }
+        return initiateResultString(pits);
     }
 
     private Game initiateGame() {
@@ -72,7 +75,7 @@ public class GameServiceImpl implements GameService {
         return game;
     }
 
-    private Game checkGameAvailability(Integer gameId) {
+    private Game checkGameAvailability(int gameId) {
         Game game = gameRepo.findGameByGameId(gameId);
         if (game == null) {
             throw new KalahException("Game_Not_Exist");
@@ -84,21 +87,14 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public Boolean checkEndOfGame(Player player1, Player player2) {
-        List<Pit> pitsOfPlayer1 = player1.getPits();
-        List<Pit> pitsOfPlayer2 = player2.getPits();
-        Boolean gameEnded = Boolean.TRUE;
-        for (Pit pit : pitsOfPlayer1) {
-            if (pit.getNumberOfStone() != 0) {
-                gameEnded = Boolean.FALSE;
-                break;
-            }
+        return (!pitService.playerHasStone(player1) || !pitService.playerHasStone(player2));
+    }
+
+    private String initiateResultString(List<Pit> pits) {
+        String gameResult = "";
+        for (Pit pit : pits) {
+            gameResult = gameResult + (pit.getPitId() + 1) + ":" + pit.getNumberOfStone() + " ,";
         }
-        for (Pit pit : pitsOfPlayer2) {
-            if (pit.getNumberOfStone() != 0) {
-                gameEnded = Boolean.FALSE;
-                break;
-            }
-        }
-        return gameEnded;
+        return gameResult;
     }
 }

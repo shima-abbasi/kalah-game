@@ -1,6 +1,5 @@
 package shima.backbase.kalah.service;
 
-
 import shima.backbase.kalah.model.Game;
 import shima.backbase.kalah.model.Player;
 

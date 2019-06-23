@@ -13,8 +13,8 @@ The default implementation of this app for 6-stone.
 ## Technology Used
 * [Java 11](http://www.oracle.com/technetwork/java/javase/downloads/index.html) - Programming language
 * [Maven 3.6.0](https://maven.apache.org/download.cgi) - Build tool
-* [Spring boot 2.1.6](https://projects.spring.io/spring-boot/) - Backed Framework
-* [In-memory H2](https://www.h2database.com/html/main.html) -DataBase
+* [Spring boot 2.1.6](https://projects.spring.io/spring-boot/) - Backend Framework
+* [In-memory H2](https://www.h2database.com/html/main.html) - DataBase
 
 ### Play The Game 2 API Using Browser or Postman
 * [CreateGame](http://localhost:8080/games/game)

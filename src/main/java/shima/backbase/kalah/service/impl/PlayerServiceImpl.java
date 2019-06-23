@@ -2,21 +2,27 @@ package shima.backbase.kalah.service.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import shima.backbase.kalah.enums.PlayerState;
 import shima.backbase.kalah.model.Game;
+import shima.backbase.kalah.model.Pit;
 import shima.backbase.kalah.model.Player;
 import shima.backbase.kalah.repository.PlayerRepo;
+import shima.backbase.kalah.service.PitService;
 import shima.backbase.kalah.service.PlayerService;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
 @Service
+@Transactional
 public class PlayerServiceImpl implements PlayerService {
     @Autowired
     private PlayerRepo playerRepo;
+
+    @Autowired
+    private PitService pitService;
 
     @Override
     public List<Player> initiatePlayers(Game game) {
@@ -30,14 +36,8 @@ public class PlayerServiceImpl implements PlayerService {
     }
 
     @Override
-    public List<Player> sortPlayers(List<Player> players) {
-        Collections.sort(players, new Comparator<Player>() {
-            @Override
-            public int compare(Player p1, Player p2) {
-                return Integer.compare(p1.getPlayerState().getValue(), p2.getPlayerState().getValue());
-            }
-        });
-        return players;
+    public void sortPlayers(List<Player> players) {
+        players.sort(Comparator.comparingInt(p -> p.getPlayerState().getValue()));
     }
 
     @Override
@@ -54,5 +54,26 @@ public class PlayerServiceImpl implements PlayerService {
     public void changeState(Player player, PlayerState playerState) {
         player.setPlayerState(playerState);
         playerRepo.save(player);
+    }
+
+    @Override
+    public void calculateWinner(Player player1, Player player2) {
+        pitService.fillKalahWithAllRemainedStones(player1);
+        pitService.fillKalahWithAllRemainedStones(player2);
+        Pit kalahPitPlayer1 = pitService.findPlayerKalahPit(player1);
+        Pit kalahPitPlayer2 = pitService.findPlayerKalahPit(player2);
+
+        if (kalahPitPlayer2.getNumberOfStone() > kalahPitPlayer1.getNumberOfStone()) {
+            changeState(player1, PlayerState.EQUAL);
+            changeState(player2, PlayerState.EQUAL);
+        }
+        if (kalahPitPlayer1.getNumberOfStone() > kalahPitPlayer2.getNumberOfStone()) {
+            changeState(player1, PlayerState.WINNER);
+            changeState(player2, PlayerState.LOOSER);
+        }
+        if (kalahPitPlayer2.getNumberOfStone() > kalahPitPlayer1.getNumberOfStone()) {
+            changeState(player1, PlayerState.LOOSER);
+            changeState(player2, PlayerState.WINNER);
+        }
     }
 }

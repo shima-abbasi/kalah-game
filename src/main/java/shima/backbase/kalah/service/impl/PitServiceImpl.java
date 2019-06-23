@@ -19,11 +19,11 @@ import java.util.List;
 @Service
 @Transactional
 public class PitServiceImpl implements PitService {
-    private final static int First_PIT_INDEX_P1 = 1;
-    private final static int LAST_PIT_INDEX_P1 = 7;
-    private final static int First_PIT_INDEX_P2 = 8;
-    private final static int LAST_PIT_INDEX_P2 = 14;
-    private final static int NUMBER_OF_STONE = 6;
+    private final static int First_PIT_INDEX_P1 = 0;
+    private final static int LAST_PIT_INDEX_P1 = 6;
+    private final static int First_PIT_INDEX_P2 = 7;
+    private final static int LAST_PIT_INDEX_P2 = 13;
+    private final static int NUMBER_OF_STONES = 6;
     private final static int MINIMUM_NUMBER_OF_STONE = 0;
 
 
@@ -35,26 +35,26 @@ public class PitServiceImpl implements PitService {
     private GameService gameService;
 
     @Override
-    public List<Pit> initiatePits(List<Player> players, Board board) {
+    public void initiatePits(List<Player> players, Board board) {
         List<Pit> pits = new ArrayList<>();
         Player player1 = players.get(0);
         Player player2 = players.get(1);
         pits.addAll(initiatePits(player1, First_PIT_INDEX_P1, LAST_PIT_INDEX_P1, board));
         pits.addAll(initiatePits(player2, First_PIT_INDEX_P2, LAST_PIT_INDEX_P2, board));
         pitRepo.saveAll(pits);
-        return pits;
     }
 
-    private List<Pit> initiatePits(Player player, int firsIndex, int lastIndex, Board board) {
+    private List<Pit> initiatePits(Player player, int firstIndex, int lastIndex, Board board) {
         List<Pit> pits = new ArrayList<>();
-        for (int index = firsIndex; index <= lastIndex; index++) {
+        for (int index = firstIndex; index <= lastIndex; index++) {
             Pit pit = new Pit();
             pit.setPitId(index);
             pit.setBoard(board);
-            pit.setNumberOfStone(NUMBER_OF_STONE);
             if (index != lastIndex) {
+                pit.setNumberOfStone(NUMBER_OF_STONES);
                 pit.setKalahPit(false);
             } else {
+                pit.setNumberOfStone(MINIMUM_NUMBER_OF_STONE);
                 pit.setKalahPit(true);
             }
             pit.setPlayer(player);
@@ -64,7 +64,7 @@ public class PitServiceImpl implements PitService {
     }
 
     @Override
-    public void checkPitValidity(Integer pitId) {
+    public void checkPitValidity(int pitId) {
         if (pitId > LAST_PIT_INDEX_P2 || pitId < First_PIT_INDEX_P1) {
             throw new KalahException("Pit_Out_Of_Range");
         }
@@ -83,56 +83,66 @@ public class PitServiceImpl implements PitService {
 
     @Override
     public List<Pit> moveStone(Player player1, Player player2, List<Pit> pits, Pit currentPit) {
-        int numberOfStoneOfPickedPit = currentPit.getNumberOfStone();
+        int numberOfStonesOfPickedPit = currentPit.getNumberOfStone();
         changeNumberOfStone(currentPit, MINIMUM_NUMBER_OF_STONE);
-        Boolean nextTurn = Boolean.TRUE;
-        Boolean emptyPitRule = Boolean.FALSE;
+        Boolean nextTurn;
+        Boolean emptyPitRule;
 
-        while (numberOfStoneOfPickedPit != MINIMUM_NUMBER_OF_STONE) {
-            Pit nextPit;
-            if (currentPit.getPitId() == LAST_PIT_INDEX_P2) {
-                nextPit = pits.get(First_PIT_INDEX_P1 - 1);
-            } else
-                nextPit = pits.get(currentPit.getPitId());
-            currentPit = nextPit;
-            if (numberOfStoneOfPickedPit == 1 && nextPit.getPlayer() == player1 && nextPit.getNumberOfStone() == MINIMUM_NUMBER_OF_STONE) {
-                emptyPitRule = Boolean.TRUE;
-            }
+        while (numberOfStonesOfPickedPit != MINIMUM_NUMBER_OF_STONE) {
+            Pit nextPit = getNextPit(pits, currentPit);
+
+            emptyPitRule = checkEmptyPitRule(numberOfStonesOfPickedPit, nextPit, player1);
+
             if (nextPit.getPlayer() == player1 || (nextPit.getPlayer() == player2 && nextPit.getKalahPit() == Boolean.FALSE)) {
-                nextPit.setNumberOfStone(nextPit.getNumberOfStone() + 1);
-                numberOfStoneOfPickedPit--;
+                changeNumberOfStone(nextPit, nextPit.getNumberOfStone() + 1);
+                numberOfStonesOfPickedPit--;
             }
-            if (numberOfStoneOfPickedPit == MINIMUM_NUMBER_OF_STONE && nextPit.getPlayer() == player1 && nextPit.getKalahPit() == Boolean.TRUE) {
-                nextTurn = Boolean.FALSE;
+
+            if (emptyPitRule) {
+                emptyPitRuleAction(player1, pits, nextPit);
             }
-            if (numberOfStoneOfPickedPit == MINIMUM_NUMBER_OF_STONE && nextTurn.equals(Boolean.TRUE)) {
-                playerService.changeTurn(player1, player2);
-            }
-            if (emptyPitRule.equals(Boolean.TRUE)) {
-                emptyPitRule(player1, pits, currentPit);
-            }
-            if (gameService.checkEndOfGame(player1, player2)) {
-                calculateWinner(player1, player2);
-            }
+            currentPit = nextPit;
+        }
+        if (!getBonusTurn(currentPit, player1)) {
+            playerService.changeTurn(player1, player2);
         }
         pitRepo.saveAll(pits);
         return pits;
     }
 
-    private void changeNumberOfStone(Pit pit, int numberOfStone) {
-        pit.setNumberOfStone(numberOfStone);
+    private Pit getNextPit(List<Pit> pits, Pit currentPit) {
+        Pit nextPit;
+        if (currentPit.getPitId() == LAST_PIT_INDEX_P2) {
+            nextPit = pits.get(First_PIT_INDEX_P1);
+        } else {
+            nextPit = pits.get(currentPit.getPitId() + 1);
+        }
+        return nextPit;
+    }
+
+    private void changeNumberOfStone(Pit pit, int numberOfStones) {
+        pit.setNumberOfStone(numberOfStones);
         pitRepo.save(pit);
     }
 
-    private void emptyPitRule(Player player, List<Pit> pits, Pit pit) {
-        Pit kalahPit = findPlayerKaladPit(player);
+    private boolean checkEmptyPitRule(int numberOfStonesOfPickedPit, Pit nextPit, Player currentPlayer) {
+        return (numberOfStonesOfPickedPit == 1 && nextPit.getPlayer() == currentPlayer && nextPit.getNumberOfStone() == MINIMUM_NUMBER_OF_STONE && !nextPit.getKalahPit());
+    }
+
+    private boolean getBonusTurn(Pit nextPit, Player currentPlayer) {
+        return (nextPit.getPlayer() == currentPlayer && nextPit.getKalahPit() == Boolean.TRUE);
+    }
+
+    private void emptyPitRuleAction(Player player, List<Pit> pits, Pit pit) {
+        Pit kalahPit = findPlayerKalahPit(player);
         Pit oppositePit = pits.get(LAST_PIT_INDEX_P2 - pit.getPitId() - 1);
-        changeNumberOfStone(kalahPit, pit.getNumberOfStone() + oppositePit.getNumberOfStone());
+        changeNumberOfStone(kalahPit, pit.getNumberOfStone() + oppositePit.getNumberOfStone() + kalahPit.getNumberOfStone());
         changeNumberOfStone(oppositePit, MINIMUM_NUMBER_OF_STONE);
         changeNumberOfStone(pit, MINIMUM_NUMBER_OF_STONE);
     }
 
-    private Pit findPlayerKaladPit(Player player) {
+    @Override
+    public Pit findPlayerKalahPit(Player player) {
         Pit kaladPit = null;
         for (Pit pit : player.getPits()) {
             if (pit.getKalahPit() == Boolean.TRUE) {
@@ -143,38 +153,27 @@ public class PitServiceImpl implements PitService {
         return kaladPit;
     }
 
-    private void calculateWinner(Player player1, Player player2) {
-        List<Pit> pitsOfPlayer1 = player1.getPits();
-        List<Pit> pitsOfPlayer2 = player2.getPits();
-        Pit kaladPitPlayer1 = findPlayerKaladPit(player1);
-        Pit kaladPitPlayer2 = findPlayerKaladPit(player2);
-
+    @Override
+    public Boolean playerHasStone(Player player) {
+        List<Pit> pitsOfPlayer1 = player.getPits();
         for (Pit pit : pitsOfPlayer1) {
             if (pit.getNumberOfStone() != MINIMUM_NUMBER_OF_STONE) {
-                changeNumberOfStone(pit, MINIMUM_NUMBER_OF_STONE);
-                changeNumberOfStone(kaladPitPlayer1, kaladPitPlayer1.getNumberOfStone() + pit.getNumberOfStone());
+                return Boolean.TRUE;
             }
         }
-        for (Pit pit : pitsOfPlayer2) {
-            if (pit.getNumberOfStone() != MINIMUM_NUMBER_OF_STONE) {
-                changeNumberOfStone(pit, MINIMUM_NUMBER_OF_STONE);
-                changeNumberOfStone(kaladPitPlayer2, kaladPitPlayer2.getNumberOfStone() + pit.getNumberOfStone());
-            }
-        }
-        pitRepo.saveAll(pitsOfPlayer1);
-        pitRepo.saveAll(pitsOfPlayer2);
+        return Boolean.FALSE;
+    }
 
-        if (kaladPitPlayer2.getNumberOfStone() > kaladPitPlayer1.getNumberOfStone()) {
-            playerService.changeState(player1, PlayerState.EQUAL);
-            playerService.changeState(player2, PlayerState.EQUAL);
+    @Override
+    public void fillKalahWithAllRemainedStones(Player player) {
+        List<Pit> pitsOfPlayer = player.getPits();
+        Pit kalahPitPlayer = findPlayerKalahPit(player);
+        for (Pit pit : pitsOfPlayer) {
+            if (pit.getNumberOfStone() != MINIMUM_NUMBER_OF_STONE) {
+                changeNumberOfStone(kalahPitPlayer, kalahPitPlayer.getNumberOfStone() + pit.getNumberOfStone());
+                changeNumberOfStone(pit, MINIMUM_NUMBER_OF_STONE);
+            }
         }
-        if (kaladPitPlayer1.getNumberOfStone() > kaladPitPlayer2.getNumberOfStone()) {
-            playerService.changeState(player1, PlayerState.WINNER);
-            playerService.changeState(player2, PlayerState.LOOSER);
-        }
-        if (kaladPitPlayer2.getNumberOfStone() > kaladPitPlayer1.getNumberOfStone()) {
-            playerService.changeState(player1, PlayerState.LOOSER);
-            playerService.changeState(player2, PlayerState.WINNER);
-        }
+        pitRepo.saveAll(pitsOfPlayer);
     }
 }

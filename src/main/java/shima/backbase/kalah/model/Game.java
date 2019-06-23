@@ -1,6 +1,5 @@
 package shima.backbase.kalah.model;
 
-
 import shima.backbase.kalah.enums.GameStatus;
 
 import javax.persistence.*;

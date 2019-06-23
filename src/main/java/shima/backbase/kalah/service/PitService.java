@@ -8,11 +8,17 @@ import java.util.List;
 
 public interface PitService {
 
-    List<Pit> initiatePits(List<Player> players, Board board);
+    void initiatePits(List<Player> players, Board board);
 
-    void checkPitValidity(Integer pitId);
+    void checkPitValidity(int pitId);
 
     void checkPitAvailability(Pit pit, Player player);
 
     List<Pit> moveStone(Player player1, Player player2, List<Pit> pits, Pit currentPit);
+
+    Pit findPlayerKalahPit(Player player);
+
+    Boolean playerHasStone(Player player);
+
+    void fillKalahWithAllRemainedStones(Player player);
 }

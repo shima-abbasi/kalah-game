@@ -1,6 +1,5 @@
 package shima.backbase.kalah.model;
 
-
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.OneToMany;
