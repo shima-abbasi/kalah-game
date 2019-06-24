@@ -8,5 +8,5 @@ public interface GameService {
 
     Object move(int gameId, int pitId);
 
-    Boolean checkEndOfGame(Player player1, Player player2);
+    Boolean checkEndOfGame(Player currentPlayer, Player opponentPlayer);
 }

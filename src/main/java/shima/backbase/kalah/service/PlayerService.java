@@ -11,10 +11,10 @@ public interface PlayerService {
 
     void sortPlayers(List<Player> players);
 
-    void changeTurn(Player player1, Player player2);
+    void changeTurn(Player currentPlayer, Player opponentPlayer);
 
     void changeState(Player player, PlayerState playerState);
 
-    void calculateWinner(Player player1, Player player2);
+    void calculateWinner(Player currentPlayer, Player opponentPlayer);
 }
 

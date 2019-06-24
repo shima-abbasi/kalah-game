@@ -51,20 +51,20 @@ public class GameServiceImpl implements GameService {
 
         List<Player> players = game.getPlayers();
         playerService.sortPlayers(players);
-        Player player1 = players.get(0);
-        Player player2 = players.get(1);
+        Player currentPlayer = players.get(0);
+        Player opponentPlayer = players.get(1);
 
         Board board = game.getBoard();
         List<Pit> pits = board.getPits();
         Pit currentPit = pits.get(pitId - 1);
 
-        pitService.checkPitAvailability(currentPit, player1);
+        pitService.checkPitAvailability(currentPit, currentPlayer);
 
-        pits = pitService.moveStone(player1, player2, pits, currentPit);
+        pits = pitService.moveStone(currentPlayer, opponentPlayer, pits, currentPit);
 
-        if (checkEndOfGame(player1, player2)) {
+        if (checkEndOfGame(currentPlayer, opponentPlayer)) {
             game.setGameStatus(GameStatus.ENDED);
-            playerService.calculateWinner(player1, player2);
+            playerService.calculateWinner(currentPlayer, opponentPlayer);
         }
         return initiateResultString(pits);
     }
@@ -86,8 +86,8 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
-    public Boolean checkEndOfGame(Player player1, Player player2) {
-        return (!pitService.playerHasStone(player1) || !pitService.playerHasStone(player2));
+    public Boolean checkEndOfGame(Player currentPlayer, Player opponentPlayer) {
+        return (!pitService.playerHasStone(currentPlayer) || !pitService.playerHasStone(opponentPlayer));
     }
 
     private String initiateResultString(List<Pit> pits) {

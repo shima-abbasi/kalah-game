@@ -11,7 +11,7 @@ The default implementation of this app for 6-stone.
 * No stones are put in the opponent's' Kalah. If the players last stone lands in his own Kalah, he gets another turn. This can be repeated any number of times before it's the other player's turn.
  
 ## Technology Used
-* [Java 11](http://www.oracle.com/technetwork/java/javase/downloads/index.html) - Programming language
+* [Java 8](http://www.oracle.com/technetwork/java/javase/downloads/index.html) - Programming language
 * [Maven 3.6.0](https://maven.apache.org/download.cgi) - Build tool
 * [Spring boot 2.1.6](https://projects.spring.io/spring-boot/) - Backend Framework
 * [In-memory H2](https://www.h2database.com/html/main.html) - DataBase

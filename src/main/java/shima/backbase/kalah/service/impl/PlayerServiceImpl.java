@@ -27,10 +27,10 @@ public class PlayerServiceImpl implements PlayerService {
     @Override
     public List<Player> initiatePlayers(Game game) {
         List<Player> players = new ArrayList<>();
-        Player player1 = new Player(game, PlayerState.TURN);
-        Player player2 = new Player(game, PlayerState.WAITING);
-        players.add(player1);
-        players.add(player2);
+        Player currentPlayer = new Player(game, PlayerState.TURN);
+        Player opponentPlayer = new Player(game, PlayerState.WAITING);
+        players.add(currentPlayer);
+        players.add(opponentPlayer);
         playerRepo.saveAll(players);
         return players;
     }
@@ -41,12 +41,12 @@ public class PlayerServiceImpl implements PlayerService {
     }
 
     @Override
-    public void changeTurn(Player player1, Player player2) {
+    public void changeTurn(Player currentPlayer, Player opponentPlayer) {
         List<Player> players = new ArrayList<>();
-        player1.setPlayerState(PlayerState.WAITING);
-        player2.setPlayerState(PlayerState.TURN);
-        players.add(player1);
-        players.add(player2);
+        currentPlayer.setPlayerState(PlayerState.WAITING);
+        opponentPlayer.setPlayerState(PlayerState.TURN);
+        players.add(currentPlayer);
+        players.add(opponentPlayer);
         playerRepo.saveAll(players);
     }
 
@@ -57,23 +57,23 @@ public class PlayerServiceImpl implements PlayerService {
     }
 
     @Override
-    public void calculateWinner(Player player1, Player player2) {
-        pitService.fillKalahWithAllRemainedStones(player1);
-        pitService.fillKalahWithAllRemainedStones(player2);
-        Pit kalahPitPlayer1 = pitService.findPlayerKalahPit(player1);
-        Pit kalahPitPlayer2 = pitService.findPlayerKalahPit(player2);
+    public void calculateWinner(Player currentPlayer, Player opponentPlayer) {
+        pitService.fillKalahWithAllRemainedStones(currentPlayer);
+        pitService.fillKalahWithAllRemainedStones(opponentPlayer);
+        Pit kalahPitPlayer1 = pitService.findPlayerKalahPit(currentPlayer);
+        Pit kalahPitPlayer2 = pitService.findPlayerKalahPit(opponentPlayer);
 
         if (kalahPitPlayer2.getNumberOfStone() > kalahPitPlayer1.getNumberOfStone()) {
-            changeState(player1, PlayerState.EQUAL);
-            changeState(player2, PlayerState.EQUAL);
+            changeState(currentPlayer, PlayerState.EQUAL);
+            changeState(opponentPlayer, PlayerState.EQUAL);
         }
         if (kalahPitPlayer1.getNumberOfStone() > kalahPitPlayer2.getNumberOfStone()) {
-            changeState(player1, PlayerState.WINNER);
-            changeState(player2, PlayerState.LOOSER);
+            changeState(currentPlayer, PlayerState.WINNER);
+            changeState(opponentPlayer, PlayerState.LOOSER);
         }
         if (kalahPitPlayer2.getNumberOfStone() > kalahPitPlayer1.getNumberOfStone()) {
-            changeState(player1, PlayerState.LOOSER);
-            changeState(player2, PlayerState.WINNER);
+            changeState(currentPlayer, PlayerState.LOOSER);
+            changeState(opponentPlayer, PlayerState.WINNER);
         }
     }
 }

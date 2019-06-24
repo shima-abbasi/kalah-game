@@ -14,7 +14,7 @@ public interface PitService {
 
     void checkPitAvailability(Pit pit, Player player);
 
-    List<Pit> moveStone(Player player1, Player player2, List<Pit> pits, Pit currentPit);
+    List<Pit> moveStone(Player currentPlayer, Player opponentPlayer, List<Pit> pits, Pit currentPit);
 
     Pit findPlayerKalahPit(Player player);
 
