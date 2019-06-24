@@ -17,7 +17,7 @@ The default implementation of this app for 6-stone.
 * [In-memory H2](https://www.h2database.com/html/main.html) - DataBase
 
 ### Play The Game 2 API Using Browser or Postman
-* [CreateGame](http://localhost:8080/games/game)
+* [CreateGame](http://localhost:8080/games)
 * [Move](http://localhost:8080/games/{gameId}/pits/{pitId})
 
 # Author
