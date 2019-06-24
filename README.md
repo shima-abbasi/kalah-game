@@ -23,7 +23,7 @@ The default implementation of this app for 6-stone.
 # Author
 * [Shima Abbasi](https://github.com/shima-abbasi) - github
 
-####How I Learned Kalah
+##### How I Learned Kalah
 * [My Kalah Board](https://drive.google.com/file/d/1f5y7ZIRYmw8VbjVWkX_lHw7ettRltzNl/view)
 
 
